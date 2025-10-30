@@ -19,10 +19,8 @@ def get_sheet_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive.readonly"
     ]
-    creds = service_account.Credentials.from_service_account_file(
-        "service_account.json",
-        scopes=scope,
-    )
+    service_account_info = json.loads(os.getenv("SERVICE_ACCOUNT"))
+    creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=scope)
     return gspread.authorize(creds)
 
 def get_gmail_service():
@@ -37,8 +35,10 @@ def get_gmail_service():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "client_secret.json", SCOPES
+            client_secret_info = json.loads(os.getenv("CLIENT_SECRET"))
+
+            flow = InstalledAppFlow.from_client_config(
+                {"installed": client_secret_info}, SCOPES
             )
             creds = flow.run_local_server(port=0)
         with open("token.pickle", "wb") as token:
@@ -155,3 +155,4 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
