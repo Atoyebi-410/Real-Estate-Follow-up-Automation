@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-import base64, os, pickle, logging
+import base64, os, pickle, logging, json
 import pandas as pd
 from datetime import datetime
 import gspread
@@ -155,4 +155,5 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
