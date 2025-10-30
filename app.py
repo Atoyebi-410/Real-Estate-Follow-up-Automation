@@ -123,19 +123,27 @@ def process_leads():
 
         # ---------- DETECT NEW LEADS AND SEND WELCOME EMAIL ----------
     new_leads = df[
-        (df["Lead Status"].str.lower() == "new lead") &
-        (df["Last Contact Date"].isna())
+        (df["Lead Status"].str.lower().str.strip() == "new lead") &
+        (df["Last Contact Date"].isna() | (df["Last Contact Date"].astype(str).str.strip() == ""))
     ]
 
+    if not new_leads.empty:
+        logging.info(f"Found {len(new_leads)} new leads. Sending welcome emails...")
+    else:
+        logging.info("No new leads found for welcome email.")
+        
     for i, lead in new_leads.iterrows():
-        name = lead["Lead Name"]
-        email = lead["Email"]
-
-        if pd.notna(email) and email.strip() != "":
-            logging.info(f"📨 Sending instant welcome email to {name} ({email})")
-            send_welcome_email(service, name, email)
-            df.loc[i, "Last Contact Date"] = today
-            df.loc[i, "Notes"] = "Welcome email sent"
+        name = lead.get("Lead Name", "there")
+        email = lead.get("Email", "").strip()
+        
+         if email:
+            try:
+                logging.info(f"Sending instant welcome email to {name} ({email})")
+                send_welcome_email(service, name, email)
+                df.loc[i, "Last Contact Date"] = today
+                df.loc[i, "Notes"] = "Welcome email sent"
+            except Exception as e:
+                logging.error(f"Failed to send welcome email to {email}: {e}")
 
 
     follow_up_list = df[
@@ -191,6 +199,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
