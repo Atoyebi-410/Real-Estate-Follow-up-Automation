@@ -46,6 +46,25 @@ def get_gmail_service():
 
     return build("gmail", "v1", credentials=creds)
 
+# ---------- INSTANT WELCOME EMAIL ----------
+def send_welcome_email(service, name, email):
+    subject = "Welcome! Let's Get Started with Your Property Search 🏡"
+    message_text = f"""
+    Hi {name},
+
+    Thank you for showing interest in our property listings! 🎉 
+    We're excited to help you find your ideal home or investment opportunity.
+
+    Our agent will contact you shortly to discuss your preferences and next steps.
+    Meanwhile, feel free to reply directly to this email if you have any specific property in mind.
+
+    Best regards,  
+    Your Real Estate Team
+    """
+
+    send_email(service, email, subject, message_text)
+
+
 
 # ---------- EMAIL SENDER ----------
 def send_email(service, to, subject, message_text):
@@ -102,6 +121,23 @@ def process_leads():
     df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days
     df["Days Since Last Contact"] = df["Days Since Last Contact"].fillna(999)
 
+        # ---------- DETECT NEW LEADS AND SEND WELCOME EMAIL ----------
+    new_leads = df[
+        (df["Lead Status"].str.lower() == "new lead") &
+        (df["Last Contact Date"].isna())
+    ]
+
+    for i, lead in new_leads.iterrows():
+        name = lead["Lead Name"]
+        email = lead["Email"]
+
+        if pd.notna(email) and email.strip() != "":
+            logging.info(f"📨 Sending instant welcome email to {name} ({email})")
+            send_welcome_email(service, name, email)
+            df.loc[i, "Last Contact Date"] = today
+            df.loc[i, "Notes"] = "Welcome email sent"
+
+
     follow_up_list = df[
         (df["Lead Status"].isin(["New Lead", "Follow-up"])) &
         (df["Days Since Last Contact"] > 2)
@@ -155,5 +191,6 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
