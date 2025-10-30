@@ -136,7 +136,7 @@ def process_leads():
         name = lead.get("Lead Name", "there")
         email = lead.get("Email", "").strip()
         
-         if email:
+        if email:
             try:
                 logging.info(f"Sending instant welcome email to {name} ({email})")
                 send_welcome_email(service, name, email)
@@ -199,6 +199,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
