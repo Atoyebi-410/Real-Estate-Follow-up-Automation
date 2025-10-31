@@ -107,9 +107,13 @@ def process_leads():
     df["Lead Status"] = df["Lead Status"].astype(str).str.lower().str.strip()
 
     # ---------- SEND WELCOME EMAIL TO NEW LEADS ----------
+    # new_leads = df[
+    #     (df["Lead Status"] == "new" or df["Lead Status"] == "") &
+    #     (df["Last Contact Date"].isin(["", "nan", "none", "NaT"])
+    # ]
     new_leads = df[
-        (df["Lead Status"] == "new" or df["Lead Status"] == "") &
-        (df["Last Contact Date"].isin(["", "nan", "none", "NaT"])
+        (df["Lead Status"].str.contains("new")) &
+        (df["Last Contact Date"].isin(["", "nan", "none"]))
     ]
 
     logging.info(f"Detected {len(new_leads)} new leads")
@@ -175,6 +179,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
