@@ -112,8 +112,8 @@ def process_leads():
     #     (df["Last Contact Date"].isin(["", "nan", "none", "NaT"])
     # ]
     new_leads = df[
-        (df["Lead Status"].str.contains("new")) &
-        (df["Last Contact Date"].isin(["", "nan", "none"]))
+        (df["Lead Status"].str.contains("new", "")) &
+        (df["Last Contact Date"].isin(["", "nan", "none", "NaT"]))
     ]
 
     logging.info(f"Detected {len(new_leads)} new leads")
@@ -179,6 +179,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
