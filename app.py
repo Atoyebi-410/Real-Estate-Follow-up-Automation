@@ -101,19 +101,21 @@ def process_leads():
     df = pd.DataFrame(values[1:], columns=values[0])
 
     today = datetime.today()
-    # df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
-    df["Last Contact Date"] = df["Last Contact Date"].astype(str).str.strip()
-    df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days.fillna(999)
+
+    # ---------- CLEAN DATE COLUMN ----------
+    # Convert to datetime, coercing bad strings to NaT
+    df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
+
+    # Calculate days since last contact safely
+    df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days.fillna(999).astype(int)
+
+    # Normalize Lead Status text
     df["Lead Status"] = df["Lead Status"].astype(str).str.lower().str.strip()
 
     # ---------- SEND WELCOME EMAIL TO NEW LEADS ----------
-    # new_leads = df[
-    #     (df["Lead Status"] == "new" or df["Lead Status"] == "") &
-    #     (df["Last Contact Date"].isin(["", "nan", "none", "NaT"])
-    # ]
     new_leads = df[
-        (df["Lead Status"].str.contains("new", "")) &
-        (df["Last Contact Date"].isin(["", "nan", "none", "NaT"]))
+        (df["Lead Status"].isin(["new", "new lead", ""])) &
+        (df["Last Contact Date"].isna())
     ]
 
     logging.info(f"Detected {len(new_leads)} new leads")
@@ -125,6 +127,7 @@ def process_leads():
                 send_welcome_email(service, name, email)
                 df.loc[i, "Last Contact Date"] = today.strftime("%Y-%m-%d")
                 df.loc[i, "Notes"] = "Welcome email sent"
+                df.loc[i, "Lead Status"] = "new lead"
                 logging.info(f"Welcome email sent to {name} ({email})")
 
     # ---------- FOLLOW-UP EMAILS ----------
@@ -179,6 +182,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
