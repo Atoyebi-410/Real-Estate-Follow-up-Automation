@@ -3,7 +3,7 @@ import os, base64, pickle, logging, json
 import pandas as pd
 from datetime import datetime
 import gspread
-from google.oauth2 import service_account
+from google.oauth2.service_account import credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -18,9 +18,8 @@ def get_sheet_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive.readonly"
     ]
-    creds = service_account.Credentials.from_service_account_file(
-        "service_account.json", scopes=scopes
-    )
+    service_account_info = json.loads(os.getenv("SERVICE_ACCOUNT"))
+    creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
     return gspread.authorize(creds)
 
 def get_gmail_service():
@@ -174,4 +173,5 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
