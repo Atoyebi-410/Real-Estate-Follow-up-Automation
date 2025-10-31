@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify
-from dotenv import load_dotenv
-load_dotenv()
 import os, base64, pickle, logging, json
 import pandas as pd
 from datetime import datetime
@@ -176,3 +174,4 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
