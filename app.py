@@ -103,13 +103,7 @@ def process_leads():
     today = datetime.today()
 
     # ---------- CLEAN DATE COLUMN ----------
-    # Convert to datetime, coercing bad strings to NaT
     df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
-
-    # Calculate days since last contact safely
-    df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days.fillna(999).astype(int)
-
-    # Normalize Lead Status text
     df["Lead Status"] = df["Lead Status"].astype(str).str.lower().str.strip()
 
     # ---------- SEND WELCOME EMAIL TO NEW LEADS ----------
@@ -130,11 +124,20 @@ def process_leads():
                 df.loc[i, "Lead Status"] = "new lead"
                 logging.info(f"Welcome email sent to {name} ({email})")
 
+    # ---------- RECALCULATE DAYS AFTER WELCOME EMAILS ----------
+    df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
+    df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days.fillna(999).astype(int)
+
     # ---------- FOLLOW-UP EMAILS ----------
     follow_up_list = df[
         (df["Lead Status"].isin(["new lead", "follow-up"])) &
         (df["Days Since Last Contact"] > 2)
     ]
+
+    # exclude anyone who just got a welcome email today
+    follow_up_list = follow_up_list[df["Last Contact Date"].dt.date < today.date()]
+
+    logging.info(f"Detected {len(follow_up_list)} leads for follow-up")
 
     for i, lead in follow_up_list.iterrows():
         email = lead.get("Email", "").strip()
@@ -156,7 +159,7 @@ def process_leads():
         """
         send_email(service, email, subject, message_text)
         df.loc[i, "Last Contact Date"] = today.strftime("%Y-%m-%d")
-        df.loc[i, "Lead Status"] = "Follow-up"
+        df.loc[i, "Lead Status"] = "follow-up"
         df.loc[i, "Notes"] = "Follow-up email sent"
 
     # ---------- UPDATE SHEET & SEND SUMMARY ----------
@@ -182,6 +185,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
