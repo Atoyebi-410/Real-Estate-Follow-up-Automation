@@ -101,16 +101,18 @@ def process_leads():
     df = pd.DataFrame(values[1:], columns=values[0])
 
     today = datetime.today()
-    df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
+    # df["Last Contact Date"] = pd.to_datetime(df["Last Contact Date"], errors="coerce")
+    df["Last Contact Date"] = df["Last Contact Date"].astype(str).str.strip()
     df["Days Since Last Contact"] = (today - df["Last Contact Date"]).dt.days.fillna(999)
     df["Lead Status"] = df["Lead Status"].astype(str).str.lower().str.strip()
 
     # ---------- SEND WELCOME EMAIL TO NEW LEADS ----------
     new_leads = df[
-        (df["Lead Status"] == "new lead") &
-        (df["Last Contact Date"].isna())
+        (df["Lead Status"] == "new" or df["Lead Status"] == "") &
+        (df["Last Contact Date"].isin(["", "nan", "none", "NaT"])
     ]
 
+    logging.info(f"Detected {len(new_leads)} new leads")
     if not new_leads.empty:
         for i, lead in new_leads.iterrows():
             email = lead.get("Email", "").strip()
@@ -173,6 +175,7 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+
 
 
 
